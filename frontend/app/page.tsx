@@ -1076,9 +1076,7 @@ const startNewChat = () => {
 
             <div className="flex items-center gap-3 w-full">
 
-              <UserButton
-                afterSignOutUrl="/"
-              />
+              <UserButton/>
 
               <span className="text-sm font-medium text-neutral-300 truncate">
 
