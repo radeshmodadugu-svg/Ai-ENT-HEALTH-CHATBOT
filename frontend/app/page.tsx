@@ -1178,7 +1178,6 @@ const startNewChat = () => {
           {isSignedIn ? (
 
             <UserButton
-              afterSignOutUrl="/"
             />
 
           ) : (
