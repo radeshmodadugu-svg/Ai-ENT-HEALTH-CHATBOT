@@ -1,0 +1,9 @@
+,acute sinusitis,chronic sinusitis,common cold,laryngitis,otitis externa (swimmer's ear),pharyngitis,seasonal allergies (hay fever),tonsillitis
+acute sinusitis,125,7,1,0,1,0,2,0
+chronic sinusitis,9,86,0,0,1,0,3,0
+common cold,0,0,136,0,0,0,0,0
+laryngitis,0,0,1,99,0,0,0,1
+otitis externa (swimmer's ear),0,2,0,0,134,0,0,0
+pharyngitis,0,0,0,2,0,1,0,0
+seasonal allergies (hay fever),1,1,2,0,0,0,132,0
+tonsillitis,0,0,0,0,0,0,0,67
