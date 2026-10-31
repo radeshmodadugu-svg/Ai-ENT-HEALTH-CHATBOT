@@ -28,6 +28,10 @@ import {
   UserButton,
   SignInButton,
 } from "@clerk/nextjs";
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://127.0.0.1:8000"
+).replace(/\/$/, "");
 
 
 export default function Chatbot() {
@@ -184,7 +188,7 @@ export default function Chatbot() {
     ) {
 
       fetch(
-        `http://127.0.0.1:8000/api/sessions/${user.id}`
+        `${API_URL}/api/sessions/${user.id}`
       )
 
         .then((res) => res.json())
@@ -231,7 +235,7 @@ export default function Chatbot() {
       sessionId
     );
     fetch(
-      `http://127.0.0.1:8000/api/session/${sessionId}`
+      `${API_URL}/api/session/${sessionId}`
     )
 
       .then((res) => res.json())
@@ -291,7 +295,7 @@ export default function Chatbot() {
     try {
 
       const res = await fetch(
-        `http://127.0.0.1:8000/api/session/${sessionId}?user_id=${encodeURIComponent(
+        `${API_URL}/api/session/${sessionId}?user_id=${encodeURIComponent(
           user.id
         )}`,
         {
@@ -597,7 +601,7 @@ const startNewChat = () => {
     try {
 
       const res = await fetch(
-        "http://127.0.0.1:8000/api/chat",
+        `${API_URL}/api/chat`,
         {
           method: "POST",
 
@@ -777,7 +781,7 @@ const startNewChat = () => {
 
       const res =
         await fetch(
-          "http://127.0.0.1:8000/api/what-if",
+          `$DIL1/api/what-if`,
           {
             method: "POST",
 
