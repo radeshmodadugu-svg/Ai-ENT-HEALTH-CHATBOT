@@ -1589,32 +1589,18 @@ async def chat_endpoint(
 
 
     # ========================================================
-    # FINAL GPT RESPONSE
+    # FAST LOCAL RESPONSE
     # ========================================================
 
-    chat_completion = (
-
-        groq_client
-        .chat
-        .completions
-        .create(
-
-            messages=
-                groq_messages,
-
-            model=
-                "openai/gpt-oss-20b"
-        )
+    if has_symptoms:
+     reply_content = (
+           f"Detected: {predicted_disease} ({confidence_str}). "
+        "This is health-awareness information, not a confirmed diagnosis. "
+        "Please consult a clinician if symptoms worsen or if you have trouble breathing, swallowing, or speaking."
     )
-
-
-    reply_content = (
-
-        chat_completion
-        .choices[0]
-        .message
-        .content
-        .strip()
+    else:
+     reply_content = (
+        "Tell me your ENT symptoms, and I will help with a health-awareness suggestion."
     )
 
 
