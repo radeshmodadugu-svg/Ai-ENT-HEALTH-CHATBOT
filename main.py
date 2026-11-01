@@ -42,7 +42,6 @@ from what_if import (
     run_what_if_prediction
 )
 
-
 # ============================================================
 # DATABASE INITIALIZATION
 # ============================================================
@@ -67,16 +66,13 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 init_db()
-
 
 # ============================================================
 # FASTAPI
 # ============================================================
 
 app = FastAPI()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -90,7 +86,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ============================================================
 # LOAD MODEL
 # ============================================================
@@ -99,21 +94,17 @@ print(
     "Loading trained model and encoders..."
 )
 
-
 model = tf.keras.models.load_model(
     "ent_dl_model.keras"
 )
-
 
 feature_names = joblib.load(
     "ent_features.joblib"
 )
 
-
 label_encoder = joblib.load(
     "ent_label_encoder.joblib"
 )
-
 
 # ============================================================
 # FEATURE LOOKUP
@@ -127,7 +118,6 @@ feature_to_index = {
     for index, feature in enumerate(feature_names)
 }
 
-
 # ============================================================
 # MODEL CALIBRATION
 # ============================================================
@@ -137,7 +127,6 @@ CALIBRATION_TEMPERATURE = float(
         "calibration_temperature.joblib"
     )
 )
-
 
 def calibrate_probabilities(probabilities):
 
@@ -178,18 +167,15 @@ def calibrate_probabilities(probabilities):
 
     return calibrated
 
-
 # ============================================================
 # GROQ
 # ============================================================
 
 load_dotenv()
 
-
 groq_api_key = os.getenv(
     "GROQ_API_KEY"
 )
-
 
 if not groq_api_key:
 
@@ -197,11 +183,9 @@ if not groq_api_key:
         "GROQ_API_KEY was not found in the .env file."
     )
 
-
 groq_client = Groq(
     api_key=groq_api_key
 )
-
 
 # ============================================================
 # PYDANTIC MODELS
@@ -225,7 +209,6 @@ class Message(BaseModel):
 
     guidance: Optional[dict] = None
 
-
 class ChatRequest(BaseModel):
 
     user_id: str
@@ -233,7 +216,6 @@ class ChatRequest(BaseModel):
     session_id: Optional[str] = None
 
     history: List[Message]
-
 
 # ============================================================
 # GET ALL SESSIONS
@@ -276,7 +258,6 @@ async def get_sessions(
         ]
     }
 
-
 # ============================================================
 # GET SINGLE SESSION
 # ============================================================
@@ -317,7 +298,6 @@ async def get_session(
     return {
         "history": []
     }
-
 
 # ============================================================
 # DELETE SINGLE SESSION
@@ -406,7 +386,6 @@ async def delete_session(
         "message": "Chat deleted successfully."
     }
 
-
 # ============================================================
 # CHAT ENDPOINT
 # ============================================================
@@ -432,7 +411,6 @@ async def chat_endpoint(
             uuid.uuid4()
         )
     )
-
 
     if not req.history:
 
@@ -462,7 +440,6 @@ async def chat_endpoint(
                 []
         }
 
-
     preview = (
 
         req.history[0].content[:25]
@@ -474,7 +451,6 @@ async def chat_endpoint(
 
         else req.history[0].content
     )
-
 
     # ========================================================
     # USER TEXT
@@ -491,13 +467,11 @@ async def chat_endpoint(
         req.history[-1].content
     )
 
-
     # ========================================================
     # LANGUAGE DETECTION
     # ========================================================
 
     language = "English"
-
 
     if any(
         char in latest_user_text
@@ -507,7 +481,6 @@ async def chat_endpoint(
 
         language = "Telugu"
 
-
     elif any(
         char in latest_user_text
         for char in
@@ -515,7 +488,6 @@ async def chat_endpoint(
     ):
 
         language = "Tamil"
-
 
     elif any(
         char in latest_user_text
@@ -525,13 +497,11 @@ async def chat_endpoint(
 
         language = "Hindi"
 
-
     latest_user_message = (
         latest_user_text
         .lower()
         .strip()
     )
-
 
     # ========================================================
     # DEFAULT VALUES
@@ -548,7 +518,6 @@ async def chat_endpoint(
     top_contributions = []
 
     guidance = None
-
 
     # ========================================================
     # RAW RED FLAG CHECK
@@ -587,7 +556,6 @@ async def chat_endpoint(
         "loss of consciousness"
     ]
 
-
     detected_red_flags = [
 
         phrase
@@ -596,7 +564,6 @@ async def chat_endpoint(
 
         if phrase in latest_user_message
     ]
-
 
     if detected_red_flags:
 
@@ -631,7 +598,6 @@ async def chat_endpoint(
                 []
         }
 
-
     # ========================================================
     # FIND PREVIOUS FOLLOW-UP QUESTION
     # ========================================================
@@ -639,7 +605,6 @@ async def chat_endpoint(
     followup_answer_symptom = None
 
     previous_followup_question = None
-
 
     if (
         len(req.history) >= 2
@@ -649,7 +614,6 @@ async def chat_endpoint(
         previous_messages = (
             req.history[:-1]
         )
-
 
         for msg in reversed(
             previous_messages
@@ -663,7 +627,6 @@ async def chat_endpoint(
                 previous_followup_question = (
                     msg.followup_question.strip()
                 )
-
 
                 for (
                     symptom,
@@ -684,7 +647,6 @@ async def chat_endpoint(
                         )
 
                 break
-
 
     # ========================================================
     # GPT SYMPTOM EXTRACTION
@@ -717,7 +679,6 @@ async def chat_endpoint(
         "return exactly 'NONE'."
     )
 
-
     # ========================================================
     # FOLLOW-UP ANSWER CONTEXT
     # ========================================================
@@ -739,7 +700,6 @@ async def chat_endpoint(
             "include that symptom."
         )
 
-
     # ========================================================
     # IMPORTANT:
     # USE ONLY LATEST USER MESSAGE FOR EXTRACTION
@@ -750,7 +710,6 @@ async def chat_endpoint(
         f"\nLatest user message: "
         f"'{latest_user_text}'"
     )
-
 
     # ========================================================
     # GPT EXTRACTION
@@ -778,7 +737,6 @@ async def chat_endpoint(
         )
     )
 
-
     extracted_content = (
 
         extractor_res
@@ -788,13 +746,11 @@ async def chat_endpoint(
         .strip()
     )
 
-
     # ========================================================
     # CLEAN EXTRACTED SYMPTOMS
     # ========================================================
 
     extracted_symptoms = []
-
 
     if (
         extracted_content
@@ -815,7 +771,6 @@ async def chat_endpoint(
             if symptom.strip()
         ]
 
-
     # ========================================================
     # REMOVE DUPLICATES
     # ========================================================
@@ -825,7 +780,6 @@ async def chat_endpoint(
             extracted_symptoms
         )
     )
-
 
     # ========================================================
     # FOLLOW-UP YES / NO HANDLING
@@ -838,7 +792,6 @@ async def chat_endpoint(
             .strip()
             .lower()
         )
-
 
         # ----------------------------------------------------
         # Negative answers
@@ -884,7 +837,6 @@ async def chat_endpoint(
                 "नहीं"
             )
         )
-
 
         # ----------------------------------------------------
         # Positive answers
@@ -943,7 +895,6 @@ async def chat_endpoint(
             )
         )
 
-
         # ----------------------------------------------------
         # YES
         # ----------------------------------------------------
@@ -958,7 +909,6 @@ async def chat_endpoint(
                 extracted_symptoms.append(
                     followup_answer_symptom
                 )
-
 
         # ----------------------------------------------------
         # NO
@@ -980,7 +930,6 @@ async def chat_endpoint(
                 )
             ]
 
-
     # ========================================================
     # CHECK WHETHER SYMPTOMS EXIST
     # ========================================================
@@ -988,7 +937,6 @@ async def chat_endpoint(
     has_symptoms = (
         len(extracted_symptoms) > 0
     )
-
 
     # ========================================================
     # EXTRACTED RED FLAG CHECK
@@ -999,7 +947,6 @@ async def chat_endpoint(
         red_flags = check_red_flags(
             extracted_symptoms
         )
-
 
         if red_flags:
 
@@ -1030,7 +977,6 @@ async def chat_endpoint(
                     extracted_symptoms
             }
 
-
     # ========================================================
     # DEEP LEARNING PIPELINE
     # ========================================================
@@ -1046,7 +992,6 @@ async def chat_endpoint(
             dtype=np.float32
         )
 
-
         for symptom in extracted_symptoms:
 
             cleaned_symptom = (
@@ -1054,7 +999,6 @@ async def chat_endpoint(
                 .strip()
                 .lower()
             )
-
 
             if cleaned_symptom in feature_to_index:
 
@@ -1065,7 +1009,6 @@ async def chat_endpoint(
                 )
 
                 input_data[index] = 1.0
-
 
         # ====================================================
         # ACTIVE FEATURES
@@ -1081,7 +1024,6 @@ async def chat_endpoint(
             if value == 1.0
         ]
 
-
         active_indices = [
 
             i
@@ -1092,7 +1034,6 @@ async def chat_endpoint(
             if value == 1.0
         ]
 
-
         print(
             "\nDetected symptoms:"
         )
@@ -1100,7 +1041,6 @@ async def chat_endpoint(
         print(
             extracted_symptoms
         )
-
 
         print(
             "\nActive features:"
@@ -1110,7 +1050,6 @@ async def chat_endpoint(
             active_features
         )
 
-
         print(
             "\nActive feature indices:"
         )
@@ -1118,7 +1057,6 @@ async def chat_endpoint(
         print(
             active_indices
         )
-
 
         print(
             "\nTotal feature count:"
@@ -1128,7 +1066,6 @@ async def chat_endpoint(
             len(feature_names)
         )
 
-
         # ====================================================
         # INPUT DATAFRAME
         # ====================================================
@@ -1137,7 +1074,6 @@ async def chat_endpoint(
             [input_data],
             columns=feature_names
         )
-
 
         # ====================================================
         # MODEL PREDICTION
@@ -1150,7 +1086,6 @@ async def chat_endpoint(
             )
         )
 
-
         # ====================================================
         # CALIBRATION
         # ====================================================
@@ -1160,7 +1095,6 @@ async def chat_endpoint(
                 raw_predictions
             )
         )
-
 
         # ====================================================
         # PREDICTED INDEX
@@ -1172,7 +1106,6 @@ async def chat_endpoint(
             )
         )
 
-
         # ====================================================
         # DEBUG - INPUT
         # ====================================================
@@ -1180,7 +1113,6 @@ async def chat_endpoint(
         print(
             "\n================ INPUT DEBUG ================"
         )
-
 
         print(
             "Extracted symptoms:"
@@ -1190,7 +1122,6 @@ async def chat_endpoint(
             extracted_symptoms
         )
 
-
         print(
             "\nActive features:"
         )
@@ -1198,7 +1129,6 @@ async def chat_endpoint(
         print(
             active_features
         )
-
 
         print(
             "\nActive feature indices:"
@@ -1208,7 +1138,6 @@ async def chat_endpoint(
             active_indices
         )
 
-
         print(
             "\nTotal feature count:"
         )
@@ -1217,7 +1146,6 @@ async def chat_endpoint(
             len(feature_names)
         )
 
-
         # ====================================================
         # DEBUG - RAW MODEL OUTPUT
         # ====================================================
@@ -1225,7 +1153,6 @@ async def chat_endpoint(
         print(
             "\n================ RAW PREDICTIONS ================"
         )
-
 
         for i, probability in enumerate(
             raw_predictions[0]
@@ -1238,12 +1165,10 @@ async def chat_endpoint(
                 )[0]
             )
 
-
             print(
                 f"{i}: {disease} = "
                 f"{probability * 100:.6f}%"
             )
-
 
         # ====================================================
         # DEBUG - CALIBRATED OUTPUT
@@ -1252,7 +1177,6 @@ async def chat_endpoint(
         print(
             "\n================ CALIBRATED PREDICTIONS ================"
         )
-
 
         for i, probability in enumerate(
             predictions[0]
@@ -1265,12 +1189,10 @@ async def chat_endpoint(
                 )[0]
             )
 
-
             print(
                 f"{i}: {disease} = "
                 f"{probability * 100:.6f}%"
             )
-
 
         # ====================================================
         # PREDICTED DISEASE
@@ -1283,7 +1205,6 @@ async def chat_endpoint(
             )[0]
         )
 
-
         print(
             "\nPredicted index:"
         )
@@ -1291,7 +1212,6 @@ async def chat_endpoint(
         print(
             predicted_index
         )
-
 
         print(
             "\nPredicted disease:"
@@ -1301,7 +1221,6 @@ async def chat_endpoint(
             predicted_disease
         )
 
-
         print(
             "\nLabel encoder classes:"
         )
@@ -1310,11 +1229,9 @@ async def chat_endpoint(
             label_encoder.classes_
         )
 
-
         print(
             "====================================================\n"
         )
-
 
         # ====================================================
         # UNCERTAINTY
@@ -1326,11 +1243,9 @@ async def chat_endpoint(
             )
         )
 
-
         confidence_percent = (
             confidence * 100
         )
-
 
         confidence_level = (
             classify_confidence(
@@ -1338,12 +1253,10 @@ async def chat_endpoint(
             )
         )
 
-
         confidence_str = (
             f"{confidence_percent:.2f}% "
             f"({confidence_level})"
         )
-
 
         # ====================================================
         # EXPLAINABLE AI
@@ -1360,18 +1273,15 @@ async def chat_endpoint(
             )
         )
 
-
         top_contributions = (
             contributions[:3]
         )
-
 
         # ====================================================
         # ADAPTIVE FOLLOW-UP
         # ====================================================
 
         asked_questions = []
-
 
         for message in req.history:
 
@@ -1381,13 +1291,11 @@ async def chat_endpoint(
                     message.followup_question
                 )
 
-
                 if question:
 
                     asked_questions.append(
                         question
                     )
-
 
         followup_result = (
             get_best_followup(
@@ -1400,7 +1308,6 @@ async def chat_endpoint(
             )
         )
 
-
         if followup_result:
 
             followup_question = (
@@ -1408,7 +1315,6 @@ async def chat_endpoint(
                     "question"
                 ]
             )
-
 
         # ====================================================
         # PERSONALIZED GUIDANCE
@@ -1425,7 +1331,6 @@ async def chat_endpoint(
             )
         )
 
-
     # ========================================================
     # CONTEXT-AWARE MEDICAL GUARDRAILS
     # ========================================================
@@ -1433,7 +1338,6 @@ async def chat_endpoint(
     is_first_message = (
         len(req.history) == 1
     )
-
 
     if is_first_message:
 
@@ -1445,7 +1349,6 @@ async def chat_endpoint(
             "medical advice.**"
         )
 
-
     else:
 
         disclaimer_rule = (
@@ -1453,7 +1356,6 @@ async def chat_endpoint(
             " DO NOT include a medical disclaimer "
             "in this response."
         )
-
 
     # ========================================================
     # SYSTEM PROMPT
@@ -1499,7 +1401,6 @@ async def chat_endpoint(
         f"{disclaimer_rule}"
     )
 
-
     # ========================================================
     # GROQ CONVERSATION
     # ========================================================
@@ -1515,7 +1416,6 @@ async def chat_endpoint(
         }
     ]
 
-
     for msg in req.history[:-1]:
 
         role = (
@@ -1527,7 +1427,6 @@ async def chat_endpoint(
             else "user"
         )
 
-
         groq_messages.append({
 
             "role":
@@ -1536,7 +1435,6 @@ async def chat_endpoint(
             "content":
                 msg.content
         })
-
 
     # ========================================================
     # CURRENT GPT PROMPT
@@ -1563,7 +1461,6 @@ async def chat_endpoint(
             "confirmed diagnosis."
         )
 
-
     else:
 
         current_prompt = (
@@ -1577,7 +1474,6 @@ async def chat_endpoint(
             "No new symptoms were detected."
         )
 
-
     groq_messages.append({
 
         "role":
@@ -1587,22 +1483,28 @@ async def chat_endpoint(
             current_prompt
     })
 
+    
+# ========================================================
+# FINAL GPT RESPONSE
+# ========================================================
 
-    # ========================================================
-    # FAST LOCAL RESPONSE
-    # ========================================================
-
-    if has_symptoms:
-     reply_content = (
-           f"Detected: {predicted_disease} ({confidence_str}). "
-        "This is health-awareness information, not a confirmed diagnosis. "
-        "Please consult a clinician if symptoms worsen or if you have trouble breathing, swallowing, or speaking."
+    chat_completion = (
+    groq_client
+    .chat
+    .completions
+    .create(
+        messages=groq_messages,
+        model="openai/gpt-oss-20b"
     )
-    else:
-     reply_content = (
-        "Tell me your ENT symptoms, and I will help with a health-awareness suggestion."
-    )
+)
 
+    reply_content = (
+    chat_completion
+    .choices[0]
+    .message
+    .content
+    .strip()
+     )
 
     # ========================================================
     # SAVE SESSION HISTORY
@@ -1614,7 +1516,6 @@ async def chat_endpoint(
 
         for msg in req.history
     ]
-
 
     updated_history.append({
 
@@ -1673,7 +1574,6 @@ async def chat_endpoint(
         )
     })
 
-
     # ========================================================
     # SAVE DATABASE
     # ========================================================
@@ -1682,9 +1582,7 @@ async def chat_endpoint(
         "chat_history.db"
     )
 
-
     cursor = conn.cursor()
-
 
     cursor.execute(
 
@@ -1714,11 +1612,9 @@ async def chat_endpoint(
         )
     )
 
-
     conn.commit()
 
     conn.close()
-
 
     # ========================================================
     # FINAL API RESPONSE
@@ -1781,7 +1677,6 @@ async def chat_endpoint(
         )
     }
 
-
 # ============================================================
 # PHASE 8 - WHAT-IF SYMPTOM SIMULATION
 # ============================================================
@@ -1793,7 +1688,6 @@ class WhatIfRequest(BaseModel):
     added_symptoms: Optional[List[str]] = None
 
     removed_symptoms: Optional[List[str]] = None
-
 
 @app.post(
     "/api/what-if"
@@ -1820,3 +1714,4 @@ async def what_if_endpoint(
     )
 
     return result
+
