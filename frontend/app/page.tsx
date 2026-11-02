@@ -30,7 +30,7 @@ import {
 } from "@clerk/nextjs";
 const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
-   "https://ai-ent-health-chatbot.onrender.com"
+   "http://127.0.0.1:8000"
 ).replace(/\/$/, "");
 
 
@@ -41,7 +41,7 @@ export default function Chatbot() {
     isSignedIn,
     user,
   } = useUser();
-
+const [conditionsOpen, setConditionsOpen] = useState(false);
 
   const [inputSymptom, setInputSymptom] =
     useState("");
@@ -62,32 +62,6 @@ export default function Chatbot() {
 
   const speechRecognitionRef =
     useRef<any>(null);
-
-
-  // ============================================================
-  // WHAT-IF SYMPTOM SIMULATION
-  // ============================================================
-
-  const [whatIfOpen, setWhatIfOpen] =
-    useState(false);
-  const [conditionsOpen, setConditionsOpen] =
-  useState(false);
-
-  const [whatIfSymptom, setWhatIfSymptom] =
-    useState("");
-
-  const [whatIfMode, setWhatIfMode] =
-    useState<"add" | "remove">("add");
-
-  const [whatIfLoading, setWhatIfLoading] =
-    useState(false);
-
-  const [whatIfResult, setWhatIfResult] =
-    useState<{
-      symptoms: string[];
-      prediction: string;
-      confidence: number;
-    } | null>(null);
 
 
   // ============================================================
@@ -343,11 +317,7 @@ export default function Chatbot() {
 
         setMessages([]);
 
-        setWhatIfOpen(false);
-
-        setWhatIfSymptom("");
-
-        setWhatIfResult(null);
+      
       }
 
 
@@ -421,16 +391,7 @@ export default function Chatbot() {
 
 const startNewChat = () => {
   setCurrentSessionId(null);
-
   setMessages([]);
-
-  setWhatIfOpen(false);
-  setConditionsOpen(false); // Add this line
-
-  setWhatIfSymptom("");
-
-  setWhatIfResult(null);
-
   setInputSymptom("");
 };
 
@@ -729,140 +690,6 @@ const startNewChat = () => {
     }
 
   };
-
-
-  // ============================================================
-  // PHASE 8 - WHAT-IF SYMPTOM SIMULATION
-  // ============================================================
-
-  const handleWhatIf = async () => {
-
-    if (
-      !whatIfSymptom.trim()
-    ) {
-
-      return;
-
-    }
-
-
-    const latestAssistantMessage =
-      [...messages]
-        .reverse()
-        .find(
-          (msg) =>
-            msg.role ===
-              "assistant" &&
-            msg.symptoms &&
-            msg.symptoms.length >
-              0
-        );
-
-
-    if (
-      !latestAssistantMessage?.symptoms
-    ) {
-
-      return;
-
-    }
-
-
-    const currentSymptoms =
-      latestAssistantMessage.symptoms;
-
-
-    setWhatIfLoading(
-      true
-    );
-
-
-    try {
-
-      const res =
-        await fetch(
-          `$DIL1/api/what-if`,
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-
-                current_symptoms:
-                  currentSymptoms,
-
-                added_symptoms:
-                  whatIfMode === "add"
-                    ? [
-                        whatIfSymptom
-                          .trim()
-                          .toLowerCase(),
-                      ]
-                    : [],
-
-                removed_symptoms:
-                  whatIfMode === "remove"
-                    ? [
-                        whatIfSymptom
-                          .trim()
-                          .toLowerCase(),
-                      ]
-                    : [],
-
-              }),
-
-          }
-        );
-
-
-      const data =
-        await res.json();
-
-
-      if (!res.ok) {
-
-        throw new Error(
-          data.detail ||
-          "What-if request failed"
-        );
-
-      }
-
-
-      setWhatIfResult(
-        data
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        "What-if simulation error:",
-        error
-      );
-
-
-      alert(
-        "Unable to run the What-If simulation."
-      );
-
-
-    } finally {
-
-      setWhatIfLoading(
-        false
-      );
-
-    }
-
-  };
-
-
   // ============================================================
   // LOADING INTERFACE
   // ============================================================
@@ -1359,34 +1186,6 @@ const startNewChat = () => {
       : "Explore conditions →"}
   </span>
 </button>
-    {/* Card 3 */}
-    <button
-      type="button"
-      onClick={() =>
-        setInputSymptom(
-          "I would like to assess my ENT symptoms and then explore how changing a symptom may affect the model prediction."
-        )
-      }
-     className="group rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:border-teal-400/30 hover:bg-teal-500/[0.05]"
-    >
-      <div className="mb-4 inline-flex rounded-xl border border-teal-400/10 bg-teal-500/[0.08] p-3">
-     <MessageSquare className="h-6 w-6 text-teal-400" />
-     </div>
-
-      <h4 className="font-semibold text-white">
-        What-If Simulator
-      </h4>
-
-      <p className="mt-2 text-sm leading-6 text-neutral-400">
-        Explore how adding or removing a symptom can change
-        the model's predicted category.
-      </p>
-
-      <span className="mt-4 block text-sm font-medium text-teal-400">
-  Explore simulation →
-</span>
-    </button>
-
     {/* Card 4 */}
     <button
       type="button"
@@ -1902,269 +1701,6 @@ const startNewChat = () => {
           />
 
         </div>
-
-
-        {/* ====================================================
-            PHASE 8 - WHAT-IF
-        ==================================================== */}
-
-        {messages.some(
-
-          (msg) =>
-            msg.role ===
-              "assistant" &&
-            msg.symptoms &&
-            msg.symptoms.length >
-              0
-
-        ) && (
-
-          <div className="px-4 md:px-6 pb-2 z-10">
-
-            <div className="max-w-4xl mx-auto">
-
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-md">
-
-
-                <div className="flex items-center justify-between mb-3">
-
-                  <div>
-
-                    <h3 className="text-sm font-semibold text-neutral-200">
-
-                      What-If Symptom Simulation
-
-                    </h3>
-
-
-                    <p className="text-xs text-neutral-500 mt-1">
-
-                      Explore how adding or removing a symptom changes the model prediction.
-
-                    </p>
-
-                  </div>
-
-
-                  <button
-
-                    onClick={() =>
-                      setWhatIfOpen(
-                        !whatIfOpen
-                      )
-                    }
-
-                    className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
-                  >
-
-                    {whatIfOpen
-                      ? "Close"
-                      : "Open"}
-
-                  </button>
-
-                </div>
-
-
-                {whatIfOpen && (
-
-                  <div className="space-y-3">
-
-
-                    <div className="flex gap-2">
-
-                      <button
-
-                        onClick={() =>
-                          setWhatIfMode(
-                            "add"
-                          )
-                        }
-
-                        className={`px-3 py-1.5 rounded-lg text-xs ${
-                          whatIfMode ===
-                          "add"
-
-                            ? "bg-blue-600 text-white"
-
-                            : "bg-white/5 text-neutral-400"
-                        }`}
-                      >
-
-                        Add Symptom
-
-                      </button>
-
-
-                      <button
-
-                        onClick={() =>
-                          setWhatIfMode(
-                            "remove"
-                          )
-                        }
-
-                        className={`px-3 py-1.5 rounded-lg text-xs ${
-                          whatIfMode ===
-                          "remove"
-
-                            ? "bg-blue-600 text-white"
-
-                            : "bg-white/5 text-neutral-400"
-                        }`}
-                      >
-
-                        Remove Symptom
-
-                      </button>
-
-                    </div>
-
-
-                    <div className="flex gap-2">
-
-                      <input
-
-                        type="text"
-
-                        value={
-                          whatIfSymptom
-                        }
-
-                        onChange={(e) =>
-                          setWhatIfSymptom(
-                            e.target.value
-                          )
-                        }
-
-                        placeholder={
-                          whatIfMode ===
-                          "add"
-
-                            ? "Enter symptom to add..."
-
-                            : "Enter symptom to remove..."
-                        }
-
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-
-
-                      <button
-
-                        onClick={
-                          handleWhatIf
-                        }
-
-                        disabled={
-                          whatIfLoading ||
-                          !whatIfSymptom.trim()
-                        }
-
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-neutral-800 disabled:text-neutral-600 text-white rounded-lg text-sm"
-                      >
-
-                        {whatIfLoading
-                          ? "Simulating..."
-                          : "Simulate"}
-
-                      </button>
-
-                    </div>
-
-
-                    {whatIfResult && (
-
-                      <div className="mt-4 bg-black/20 border border-white/10 rounded-xl p-4">
-
-
-                        <div className="text-xs text-neutral-500 mb-2">
-
-                          What-If Result
-
-                        </div>
-
-
-                        <div className="text-sm text-neutral-200">
-
-                          <span className="font-semibold">
-
-                            Prediction:
-
-                          </span>{" "}
-
-                          {
-                            whatIfResult.prediction
-                          }
-
-                        </div>
-
-
-                        <div className="text-sm text-neutral-200 mt-1">
-
-                          <span className="font-semibold">
-
-                            Confidence:
-
-                          </span>{" "}
-
-                          {
-                            whatIfResult.confidence
-                          }%
-
-                        </div>
-
-
-                        <div className="text-xs text-neutral-500 mt-3">
-
-                          Modified symptoms:
-
-                        </div>
-
-
-                        <div className="flex flex-wrap gap-2 mt-2">
-
-                          {whatIfResult.symptoms.map(
-                            (
-                              symptom
-                            ) => (
-
-                              <span
-
-                                key={
-                                  symptom
-                                }
-
-                                className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-xs text-blue-300"
-                              >
-
-                                {
-                                  symptom
-                                }
-
-                              </span>
-
-                            )
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    )}
-
-                  </div>
-
-                )}
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )}
-
 
         {/* ====================================================
             INPUT AREA
